@@ -4,7 +4,7 @@
 
 import 'dart:async';
 
-import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:fast_immutable_collections/fast_immutable_collections.dart' hide Output;
 import 'package:obmin/obmin.dart';
 
 final class Machine<Input, Output> {
