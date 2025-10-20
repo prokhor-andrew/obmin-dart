@@ -5,7 +5,7 @@
 import 'dart:async';
 
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
-import 'package:obmin_dart/obmin_dart.dart';
+import 'package:obmin/obmin.dart';
 
 final class Machine<Input, Output> {
   final ChannelBufferStrategy<Input>? inputBufferStrategy;

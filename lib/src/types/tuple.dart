@@ -2,7 +2,7 @@
 // This file is part of Obmin, licensed under the MIT License.
 // See the LICENSE file in the project root for license information.
 
-import 'package:obmin_dart/obmin_dart.dart';
+import 'package:obmin/obmin.dart';
 
 extension TupleExtensions<A, B> on (A, B) {
   B extract() => $2;
