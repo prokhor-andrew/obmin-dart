@@ -1,0 +1,51 @@
+# Dart and Flutter build artifacts
+.dart_tool/
+.packages
+.pub/
+build/
+coverage/
+doc/api/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+.history/
+
+# macOS and Linux system files
+.DS_Store
+Thumbs.db
+
+# Dependency lock files (optional)
+pubspec.lock
+
+# Generated files
+*.g.dart
+*.freezed.dart
+
+# Test outputs
+test/**/*.log
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*.orig
+
+# If it's a Flutter package with example apps
+example/.dart_tool/
+example/build/
+example/ios/Flutter/App.framework
+example/ios/Flutter/Flutter.framework
+example/ios/Flutter/Flutter.podspec
+example/ios/ServiceDefinitions.json
+example/ios/Runner/GeneratedPluginRegistrant.*
+example/android/.gradle/
+example/android/app/build/
+example/android/local.properties
+example/web/
