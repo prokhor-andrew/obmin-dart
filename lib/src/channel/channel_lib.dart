@@ -7,7 +7,6 @@ library channel;
 import 'dart:async';
 
 import 'package:obmin/obmin.dart';
-import 'package:uuid/uuid.dart';
 
 part 'channel_buffer_data.dart';
 

@@ -9,20 +9,24 @@ final class Channel<T> {
 
   final ChannelBufferStrategy<T> bufferStrategy;
 
-  Channel({
-    required this.bufferStrategy,
-  });
+  Channel({required this.bufferStrategy});
 
   ChannelTask<bool> send(T val) {
-    final String id = const Uuid().v4().toString();
+    final String id = nextId();
     final Completer<bool> completer = Completer();
 
     switch (_state) {
       case _IdleChannelState<T>():
-        _handleBuffer(event: ChannelBufferAddedEvent(), currentArray: [ChannelBufferData._(id: id, data: val, completer: completer)]);
+        _handleBuffer(
+          event: ChannelBufferAddedEvent(),
+          currentArray: [ChannelBufferData._(id: id, data: val, completer: completer)],
+        );
         break;
       case _AwaitingForConsumer<T>(buffer: final array):
-        _handleBuffer(event: ChannelBufferAddedEvent(), currentArray: array.plus(ChannelBufferData._(id: id, data: val, completer: completer)));
+        _handleBuffer(
+          event: ChannelBufferAddedEvent(),
+          currentArray: array.plus(ChannelBufferData._(id: id, data: val, completer: completer)),
+        );
         break;
       case _AwaitingForProducer<T>(cur: final cur, rest: final rest):
         _state = _IdleChannelState();
@@ -57,7 +61,7 @@ final class Channel<T> {
   }
 
   ChannelTask<Option<T>> next() {
-    final String id = const Uuid().v4().toString();
+    final String id = nextId();
     final Completer<Option<T>> completer = Completer();
 
     switch (_state) {
@@ -107,10 +111,7 @@ final class Channel<T> {
     );
   }
 
-  void _handleBuffer({
-    required ChannelBufferEvent event,
-    required List<ChannelBufferData<T>> currentArray,
-  }) {
+  void _handleBuffer({required ChannelBufferEvent event, required List<ChannelBufferData<T>> currentArray}) {
     final bufferedArray = bufferStrategy.bufferReducer(currentArray.toList(), event).toList();
 
     final List<ChannelBufferData<T>> withoutDuplicates = bufferedArray.fold<List<ChannelBufferData<T>>>([], (partialResult, element) {
@@ -137,10 +138,7 @@ final class _AwaitingForProducer<T> extends _ChannelState<T> {
   final _ChannelConsumer<T> cur;
   final List<_ChannelConsumer<T>> rest;
 
-  _AwaitingForProducer({
-    required this.cur,
-    required this.rest,
-  });
+  _AwaitingForProducer({required this.cur, required this.rest});
 }
 
 final class _AwaitingForConsumer<T> extends _ChannelState<T> {
@@ -187,3 +185,7 @@ extension _ListHelpersExtension<T> on List<T> {
     return copy;
   }
 }
+
+int _counter = 0;
+
+String nextId() => 'id_${_counter++}';
