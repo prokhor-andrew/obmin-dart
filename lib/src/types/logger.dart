@@ -9,28 +9,30 @@ final class Logger<A> {
   final String _log;
   final A _value;
 
-  const Logger(this._log, this._value);
+  const Logger._(this._log, this._value);
 
   String log() => _log;
 
   A value() => _value;
 
-  static Logger<A> of<A>(A value) => Logger("", value);
+  static Logger<A> fromLogAndValue<A>(String log, A value) => Logger._(log, value);
+
+  static Logger<A> of<A>(A value) => Logger._("", value);
 
   static Logger<()> unit() => Logger.of<()>(());
 
   Logger<A2> rmap<A2>(Func<A, A2> f) {
-    return Logger(_log, f(_value));
+    return Logger._(_log, f(_value));
   }
 
   Logger<A2> bind<A2>(Func<A, Logger<A2>> f) {
     final newLogger = f(_value);
-    return Logger(_log + newLogger._log, newLogger._value);
+    return Logger._(_log + newLogger._log, newLogger._value);
   }
 
   Logger<(A, A2)> zip<A2>(Logger<A2> other) {
     final newLog = _log + other._log;
-    return Logger(newLog, (_value, other._value));
+    return Logger._(newLog, (_value, other._value));
   }
 
   static Logger<IList<A>> zipAll<A>(IList<Logger<A>> list) {
@@ -46,13 +48,8 @@ final class Logger<A> {
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-
-    if (other is! Logger<A>) {
-      return false;
-    }
+    if (identical(this, other)) return true;
+    if (other is! Logger<A>) return false;
 
     return _log == other._log && _value == other._value;
   }

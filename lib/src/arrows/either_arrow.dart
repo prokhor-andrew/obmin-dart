@@ -71,9 +71,9 @@ final class EitherArrow<E, A, B> {
     });
   }
 
-  EitherArrow<E2, A, B> recover<E2>(EitherArrow<E2, E, B> other) {
+  EitherArrow<E2, A, B> lthen<E2>(EitherArrow<E2, E, B> other) {
     return EitherArrow.fromRun<E2, A, B>((a) {
-      return run(a).rescue<E2>(other.run);
+      return run(a).lbind<E2>(other.run);
     });
   }
 

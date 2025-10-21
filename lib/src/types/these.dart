@@ -33,8 +33,8 @@ final class These<A, B> {
     if (other is! These<A, B>) return false;
 
     return match<bool>(
-      (a) => other.match<bool>((a2) => a == a2, constfunc<B, bool>(false), (_, __) => false),
-      (b) => other.match<bool>(constfunc<A, bool>(false), (b2) => b == b2, (_, __) => false),
+      (a) => other.match<bool>((a2) => a == a2, constfunc<B, bool>(false), (_, _) => false),
+      (b) => other.match<bool>(constfunc<A, bool>(false), (b2) => b == b2, (_, _) => false),
       (a, b) => other.match<bool>(constfunc<A, bool>(false), constfunc<B, bool>(false), (a2, b2) => a == a2 && b == b2),
     );
   }

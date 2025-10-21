@@ -39,7 +39,7 @@ final class Either<A, B> {
     return match<Either<B, A>>(Either.right<B, A>, Either.left<B, A>);
   }
 
-  Either<T, B> rescue<T>(Func<A, Either<T, B>> function) {
+  Either<T, B> lbind<T>(Func<A, Either<T, B>> function) {
     return match<Either<T, B>>(function, Either.right<T, B>);
   }
 

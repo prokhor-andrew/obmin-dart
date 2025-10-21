@@ -31,8 +31,8 @@ final class Call<A, B> {
   @override
   int get hashCode => _either.hashCode;
 
-  Call<T, B> rescue<T>(Func<A, Call<T, B>> f) {
-    return _either.rescue<T>((val) => f(val)._either).asCall();
+  Call<T, B> lbind<T>(Func<A, Call<T, B>> f) {
+    return _either.lbind<T>((val) => f(val)._either).asCall();
   }
 
   Call<T, B> lmap<T>(Func<A, T> f) {
