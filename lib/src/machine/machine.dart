@@ -98,10 +98,10 @@ final class Machine<Input, Output> {
     );
   }
 
-  static Machine<Input, Output> fromResource<Object, Input, Output>({
-    required Object Function() onCreate,
-    required Future<void> Function(Object object, ChannelTask<bool> Function(Output output)? callback) onChange,
-    required Future<void> Function(Object object, Input input) onProcess,
+  static Machine<Input, Output> fromResource<Obj, Input, Output>({
+    required Obj Function() onCreate,
+    required Future<void> Function(Obj object, ChannelTask<bool> Function(Output output)? callback) onChange,
+    required Future<void> Function(Obj object, Input input) onProcess,
     ChannelBufferStrategy<Input>? inputBufferStrategy,
     ChannelBufferStrategy<Output>? outputBufferStrategy,
   }) {
@@ -109,7 +109,7 @@ final class Machine<Input, Output> {
       inputBufferStrategy: inputBufferStrategy,
       outputBufferStrategy: outputBufferStrategy,
       onCreate: () {
-        final Object object = onCreate();
+        final Obj object = onCreate();
 
         return (
           (callback) async {
@@ -146,14 +146,14 @@ final class Machine<Input, Output> {
     );
   }
 
-  static Machine<Never, T> fromProducer<Object, T>({
-    required Object Function(void Function(T response) callback) onStart,
-    required void Function(Object object) onStop,
+  static Machine<Never, T> fromProducer<Obj, T>({
+    required Obj Function(void Function(T response) callback) onStart,
+    required void Function(Obj object) onStop,
     ChannelBufferStrategy<T>? bufferStrategy,
   }) {
-    return Machine.fromResource<_ProducerHolder<Object>, Never, T>(
+    return Machine.fromResource<_ProducerHolder<Obj>, Never, T>(
       onCreate: () {
-        return _ProducerHolder<Object>();
+        return _ProducerHolder<Obj>();
       },
       onChange: (object, callback) async {
         if (callback != null) {
@@ -161,7 +161,7 @@ final class Machine<Input, Output> {
             await callback(output).future;
           });
         } else {
-          onStop(object.object as Object);
+          onStop(object.object as Obj);
           object.object = null;
         }
       },
@@ -313,7 +313,7 @@ final class Machine<Input, Output> {
     ChannelBufferStrategy<Endo<State>>? outputBufferStrategy,
     ChannelBufferStrategy<Either<Endo<State>, State>>? internalBufferStrategy,
   }) {
-    IMap<String, Machine<Never, Endo<State>>> _mapping(Helper helper, State state) {
+    IMap<String, Machine<Never, Endo<State>>> mapping(Helper helper, State state) {
       final map = arrow.run((helper, state)).asMap();
       return map.map((key, value) => MapEntry(key.join("/"), value));
     }
@@ -322,9 +322,9 @@ final class Machine<Input, Output> {
       onCreateHelper: onCreateHelper,
       onDestroyHelper: onDestroyHelper,
       initial: (helper) {
-        return _mapping(helper, initial);
+        return mapping(helper, initial);
       },
-      map: _mapping,
+      map: mapping,
       shouldWaitOnEffects: shouldWaitOnEffects,
       inputBufferStrategy: inputBufferStrategy,
       outputBufferStrategy: outputBufferStrategy,
@@ -426,8 +426,8 @@ final class Process {
   }
 }
 
-final class _ProducerHolder<Object> {
-  Object? object;
+final class _ProducerHolder<Obj> {
+  Obj? object;
 }
 
 final class _MealyHolder<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> {
@@ -459,7 +459,7 @@ final class _MealyHolder<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> {
        _channel = _Channel(bufferStrategy: bufferStrategy ?? ChannelBufferStrategy.defaultStrategy(id: "default"));
 
   Future<void> onChange(ChannelTask<bool> Function(ExtEffect effect)? callback) async {
-    this._callback = callback;
+    _callback = callback;
 
     if (callback != null) {
       final state = await _onCreate();
@@ -647,7 +647,7 @@ final class _Channel<T> {
         break;
     }
 
-    return ChannelTask(
+    return ChannelTask._(
       id: id,
       future: completer.future,
       cancel: () {
@@ -688,7 +688,7 @@ final class _Channel<T> {
         break;
     }
 
-    return ChannelTask(
+    return ChannelTask._(
       id: id,
       future: completer.future,
       cancel: () {
@@ -740,15 +740,19 @@ final class _Channel<T> {
   }
 }
 
-sealed class _ChannelState<T> {}
+sealed class _ChannelState<T> {
+  const _ChannelState();
+}
 
-final class _IdleChannelState<T> extends _ChannelState<T> {}
+final class _IdleChannelState<T> extends _ChannelState<T> {
+  const _IdleChannelState();
+}
 
 final class _AwaitingForProducer<T> extends _ChannelState<T> {
   final _ChannelConsumer<T> cur;
   final List<_ChannelConsumer<T>> rest;
 
-  _AwaitingForProducer({required this.cur, required this.rest});
+  const _AwaitingForProducer({required this.cur, required this.rest});
 }
 
 final class _AwaitingForConsumer<T> extends _ChannelState<T> {
@@ -846,12 +850,14 @@ sealed class ChannelBufferEvent {
   int get hashCode => isAdded.hashCode;
 }
 
-final class ChannelBufferAddedEvent extends ChannelBufferEvent {}
+final class ChannelBufferAddedEvent extends ChannelBufferEvent {
+  const ChannelBufferAddedEvent();
+}
 
 final class ChannelBufferRemovedEvent extends ChannelBufferEvent {
   final bool isConsumed;
 
-  ChannelBufferRemovedEvent({required this.isConsumed});
+  const ChannelBufferRemovedEvent({required this.isConsumed});
 
   @override
   bool operator ==(Object other) =>
@@ -893,7 +899,7 @@ final class ChannelTask<T> {
   final Future<T> future;
   final void Function() cancel;
 
-  const ChannelTask({required this.id, required this.future, required this.cancel});
+  const ChannelTask._({required this.id, required this.future, required this.cancel});
 
   @override
   String toString() {
