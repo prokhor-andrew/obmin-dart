@@ -7,29 +7,18 @@ import 'package:obmin/obmin.dart';
 
 final class Plan<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> {
   final State state;
-  final PlanTransition<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> Function(
-    Either<IntTrigger, ExtTrigger>,
-  ) transit;
+  final PlanTransition<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> Function(Either<IntTrigger, ExtTrigger>) transit;
 
-  const Plan._({
-    required this.state,
-    required this.transit,
-  });
+  const Plan._({required this.state, required this.transit});
 
   static Plan<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> create<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect>({
     required State state,
-    required PlanTransition<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> Function(
-      State state,
-      Either<IntTrigger, ExtTrigger> trigger,
-    ) transit,
+    required PlanTransition<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> Function(State state, Either<IntTrigger, ExtTrigger> trigger) transit,
   }) {
     return Plan._(
       state: state,
       transit: (trigger) {
-        return transit(
-          state,
-          trigger,
-        );
+        return transit(state, trigger);
       },
     );
   }
@@ -48,10 +37,7 @@ final class Plan<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> {
       machines: machines,
       transit: (state, machines, trigger) {
         final transition = transit(trigger);
-        return MealyTransition(
-          transition.plan.asMealy(machines),
-          effects: transition.effects,
-        );
+        return MealyTransition(transition.plan.asMealy(machines), effects: transition.effects);
       },
     );
   }
@@ -61,10 +47,7 @@ final class PlanTransition<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> 
   final Plan<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> plan;
   final IList<Either<IntEffect, ExtEffect>> effects;
 
-  const PlanTransition(
-    this.plan, {
-    this.effects = const IList.empty(),
-  });
+  const PlanTransition(this.plan, {this.effects = const IList.empty()});
 
   @override
   bool operator ==(Object other) {

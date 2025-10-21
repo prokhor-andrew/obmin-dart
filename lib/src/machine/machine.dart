@@ -11,7 +11,13 @@ final class Machine<Input, Output> {
   final ChannelBufferStrategy<Input>? inputBufferStrategy;
   final ChannelBufferStrategy<Output>? outputBufferStrategy;
 
-  final (Future<void> Function(ChannelTask<bool> Function(Output output)? callback) onChange, Future<void> Function(Input input) onProcess) Function() onCreate;
+  final (
+    Future<void> Function(ChannelTask<bool> Function(Output output)? callback) onChange,
+    Future<void> Function(Input input) onProcess,
+    //
+  )
+  Function()
+  onCreate;
 
   const Machine({this.inputBufferStrategy, this.outputBufferStrategy, required this.onCreate});
 
@@ -26,9 +32,9 @@ final class Machine<Input, Output> {
     final ChannelBufferStrategy<Output> actualOutputBufferStrategy = this.outputBufferStrategy ?? outputBufferStrategy ?? ChannelBufferStrategy.defaultStrategy(id: "default");
     final ChannelBufferStrategy<Input> actualInputBufferStrategy = this.inputBufferStrategy ?? inputBufferStrategy ?? ChannelBufferStrategy.defaultStrategy(id: "default");
 
-    final Channel<Input> inputChannel = Channel(bufferStrategy: actualInputBufferStrategy);
+    final _Channel<Input> inputChannel = _Channel(bufferStrategy: actualInputBufferStrategy);
 
-    final Channel<Output> outputChannel = Channel(bufferStrategy: actualOutputBufferStrategy);
+    final _Channel<Output> outputChannel = _Channel(bufferStrategy: actualOutputBufferStrategy);
 
     bool isCancelled = false;
     ChannelTask<Option<Input>>? inputTask;
@@ -436,7 +442,7 @@ final class _MealyHolder<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> {
   IMap<String, Process> _processes = const IMap.empty();
   final Map<String, ChannelTask<bool> Function(IntEffect)> _senders = {};
 
-  final Channel<Either<IntTrigger, ExtTrigger>> _channel;
+  final _Channel<Either<IntTrigger, ExtTrigger>> _channel;
   ChannelTask<Option<Either<IntTrigger, ExtTrigger>>>? _task;
 
   late State _state;
@@ -450,7 +456,7 @@ final class _MealyHolder<State, IntTrigger, IntEffect, ExtTrigger, ExtEffect> {
     required this.shouldWaitOnEffects,
   }) : _onCreate = onCreate,
        _onDestroy = onDestroy,
-       _channel = Channel(bufferStrategy: bufferStrategy ?? ChannelBufferStrategy.defaultStrategy(id: "default"));
+       _channel = _Channel(bufferStrategy: bufferStrategy ?? ChannelBufferStrategy.defaultStrategy(id: "default"));
 
   Future<void> onChange(ChannelTask<bool> Function(ExtEffect effect)? callback) async {
     this._callback = callback;
@@ -604,4 +610,299 @@ extension _OptionForce<A> on Option<A> {
   A force() {
     return match<A>(() => throw "Option.none is being forcefully unwrapped", idfunc);
   }
+}
+
+// CHANNEL HELPER
+
+final class _Channel<T> {
+  _ChannelState<T> _state = _IdleChannelState();
+
+  final ChannelBufferStrategy<T> bufferStrategy;
+
+  _Channel({required this.bufferStrategy});
+
+  ChannelTask<bool> send(T val) {
+    final String id = _nextId();
+    final Completer<bool> completer = Completer();
+
+    switch (_state) {
+      case _IdleChannelState<T>():
+        _handleBuffer(
+          event: ChannelBufferAddedEvent(),
+          currentArray: [ChannelBufferData._(id: id, data: val, completer: completer)],
+        );
+        break;
+      case _AwaitingForConsumer<T>(buffer: final array):
+        _handleBuffer(
+          event: ChannelBufferAddedEvent(),
+          currentArray: array.plus(ChannelBufferData._(id: id, data: val, completer: completer)),
+        );
+        break;
+      case _AwaitingForProducer<T>(cur: final cur, rest: final rest):
+        _state = _IdleChannelState();
+        for (final element in [cur].plusMultiple(rest)) {
+          element.comp.complete(Option.some(val));
+        }
+        completer.complete(true);
+        break;
+    }
+
+    return ChannelTask(
+      id: id,
+      future: completer.future,
+      cancel: () {
+        switch (_state) {
+          case _IdleChannelState<T>() || _AwaitingForProducer<T>():
+            break; // do nothing, as there is no completer to be completed
+          case _AwaitingForConsumer<T>(buffer: final array):
+            final currentArray = array.where((data) {
+              if (data.id != id) {
+                return true;
+              } else {
+                data._completer.complete(false);
+                return false;
+              }
+            }).toList();
+
+            _handleBuffer(event: ChannelBufferRemovedEvent(isConsumed: false), currentArray: currentArray);
+        }
+      },
+    );
+  }
+
+  ChannelTask<Option<T>> next() {
+    final String id = _nextId();
+    final Completer<Option<T>> completer = Completer();
+
+    switch (_state) {
+      case _IdleChannelState<T>():
+        _state = _AwaitingForProducer(cur: _ChannelConsumer(id, completer), rest: []);
+        break;
+      case _AwaitingForProducer<T>(cur: final cur, rest: final rest):
+        _state = _AwaitingForProducer(cur: cur, rest: rest.plus(_ChannelConsumer(id, completer)));
+        break;
+      case _AwaitingForConsumer<T>(buffer: final array):
+        array[0]._completer.complete(true);
+        completer.complete(Option.some(array[0].data));
+        _handleBuffer(event: ChannelBufferRemovedEvent(isConsumed: true), currentArray: array.minusFirst());
+        break;
+    }
+
+    return ChannelTask(
+      id: id,
+      future: completer.future,
+      cancel: () {
+        switch (_state) {
+          case _IdleChannelState<T>() || _AwaitingForConsumer<T>():
+            break; // do nothing as there is no completer to complete
+          case _AwaitingForProducer<T>(cur: final cur, rest: final rest):
+            if (cur.id == id) {
+              if (rest.isEmpty) {
+                _state = _IdleChannelState();
+                cur.comp.complete(Option.none());
+              } else {
+                _state = _AwaitingForProducer(cur: rest[0], rest: rest.minusFirst());
+                cur.comp.complete(Option.none());
+              }
+            } else {
+              final newList = rest.where((item) {
+                if (item.id != id) {
+                  return true;
+                } else {
+                  item.comp.complete(Option.none());
+                  return false;
+                }
+              }).toList();
+              _state = _AwaitingForProducer(cur: cur, rest: newList);
+            }
+            break;
+        }
+      },
+    );
+  }
+
+  void _handleBuffer({required ChannelBufferEvent event, required List<ChannelBufferData<T>> currentArray}) {
+    final bufferedArray = bufferStrategy.bufferReducer(currentArray.toList(), event).toList();
+
+    final List<ChannelBufferData<T>> withoutDuplicates = bufferedArray.fold<List<ChannelBufferData<T>>>([], (partialResult, element) {
+      return partialResult.contains(element) ? partialResult : partialResult.plus(element);
+    }).toList();
+
+    final set1 = Set<ChannelBufferData<T>>.from(currentArray);
+    final set2 = Set<ChannelBufferData<T>>.from(withoutDuplicates);
+
+    final difference = set1.union(set2).difference(set1.intersection(set2));
+    _state = withoutDuplicates.isEmpty ? _IdleChannelState() : _AwaitingForConsumer(withoutDuplicates);
+
+    for (final element in difference) {
+      element._completer.complete(false);
+    }
+  }
+}
+
+sealed class _ChannelState<T> {}
+
+final class _IdleChannelState<T> extends _ChannelState<T> {}
+
+final class _AwaitingForProducer<T> extends _ChannelState<T> {
+  final _ChannelConsumer<T> cur;
+  final List<_ChannelConsumer<T>> rest;
+
+  _AwaitingForProducer({required this.cur, required this.rest});
+}
+
+final class _AwaitingForConsumer<T> extends _ChannelState<T> {
+  final List<ChannelBufferData<T>> buffer;
+
+  _AwaitingForConsumer(this.buffer);
+}
+
+final class _ChannelConsumer<T> {
+  final String id;
+  final Completer<Option<T>> comp;
+
+  _ChannelConsumer(this.id, this.comp);
+}
+
+extension _ListHelpersExtension<T> on List<T> {
+  List<T> minusFirst([int count = 1]) {
+    assert(count >= 0);
+
+    if (isEmpty || count == 0) {
+      return this;
+    }
+
+    if (length <= count) {
+      return [];
+    }
+
+    final List<T> copy = toList();
+    for (int i = 0; i < count; i++) {
+      copy.removeAt(0);
+    }
+    return copy;
+  }
+
+  List<T> plus(T element) {
+    final List<T> copy = toList();
+    copy.add(element);
+    return copy;
+  }
+
+  List<T> plusMultiple(List<T> elements) {
+    final List<T> copy = toList();
+    copy.addAll(elements);
+    return copy;
+  }
+}
+
+int _counter = 0;
+
+String _nextId() => 'id_${_counter++}';
+
+final class ChannelBufferData<T> {
+  final String id;
+  final T data;
+  final Completer<bool> _completer;
+
+  const ChannelBufferData._({required this.id, required this.data, required Completer<bool> completer}) : _completer = completer;
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is ChannelBufferData<T> && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() {
+    return 'ChannelBufferData<$T>{ id=$id _ data=$data }';
+  }
+}
+
+sealed class ChannelBufferEvent {
+  const ChannelBufferEvent();
+
+  bool get isAdded => switch (this) {
+    ChannelBufferAddedEvent() => true,
+    ChannelBufferRemovedEvent() => false,
+  };
+
+  bool get isRemoved => !isAdded;
+
+  @override
+  String toString() {
+    switch (this) {
+      case ChannelBufferAddedEvent():
+        return "ChannelBufferAddedEvent";
+      case ChannelBufferRemovedEvent(isConsumed: final isConsumed):
+        return "ChannelBufferRemovedEvent{ ${isConsumed ? "consumed" : "cancelled"} }";
+    }
+  }
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is ChannelBufferEvent && runtimeType == other.runtimeType && isAdded == other.isAdded;
+
+  @override
+  int get hashCode => isAdded.hashCode;
+}
+
+final class ChannelBufferAddedEvent extends ChannelBufferEvent {}
+
+final class ChannelBufferRemovedEvent extends ChannelBufferEvent {
+  final bool isConsumed;
+
+  ChannelBufferRemovedEvent({required this.isConsumed});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || super == other && other is ChannelBufferRemovedEvent && runtimeType == other.runtimeType && isAdded == other.isAdded && isConsumed == other.isConsumed;
+
+  @override
+  int get hashCode => super.hashCode ^ isConsumed.hashCode;
+}
+
+final class ChannelBufferStrategy<T> {
+  final String id;
+  final List<ChannelBufferData<T>> Function(List<ChannelBufferData<T>> data, ChannelBufferEvent event) bufferReducer;
+
+  const ChannelBufferStrategy({required this.id, required this.bufferReducer});
+
+  static ChannelBufferStrategy<T> defaultStrategy<T>({required String id}) {
+    return ChannelBufferStrategy<T>(
+      id: id,
+      bufferReducer: (data, event) {
+        return data;
+      },
+    );
+  }
+
+  @override
+  String toString() {
+    return "ChannelBufferStrategy<$T>{ id=$id }";
+  }
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is ChannelBufferStrategy<T> && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+final class ChannelTask<T> {
+  final String id;
+  final Future<T> future;
+  final void Function() cancel;
+
+  const ChannelTask({required this.id, required this.future, required this.cancel});
+
+  @override
+  String toString() {
+    return "$ChannelTask<$T> id=$id";
+  }
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is ChannelTask<T> && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
