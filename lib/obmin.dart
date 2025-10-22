@@ -9,6 +9,7 @@ export 'src/arrows/validator_arrow.dart';
 export 'src/arrows/writer_arrow.dart';
 export 'src/arrows/zip_list_arrow.dart';
 export 'src/arrows/zip_path_arrow.dart';
+export 'src/arrows/store_arrow.dart';
 export 'src/func.dart';
 export 'src/machine/machine.dart';
 export 'src/machine/mealy.dart';
