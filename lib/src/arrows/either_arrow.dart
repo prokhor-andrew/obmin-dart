@@ -77,16 +77,6 @@ final class EitherArrow<E, A, B> {
     });
   }
 
-  EitherArrow<E, A, B> orElseArrow(EitherArrow<E, A, B> fallback) {
-    return orElseFunc<E>(constfunc(fallback));
-  }
-
-  EitherArrow<E2, A, B> orElseFunc<E2>(Func<E, EitherArrow<E2, A, B>> f) {
-    return EitherArrow.fromRun<E2, A, B>((a) {
-      return run(a).match<Either<E2, B>>((e) => f(e).run(a), Either.right<E2, B>);
-    });
-  }
-
   static EitherArrow<E, A, IList<B>> zipAll<E, A, B>(IList<EitherArrow<E, A, B>> list) {
     return list.fold<EitherArrow<E, A, IList<B>>>(EitherArrow.fromRun<E, A, IList<B>>((_) => Either.right<E, IList<B>>(IList<B>.empty())), (current, element) {
       final arrow = element.rmap<IList<B>>((value) => [value].lock);
