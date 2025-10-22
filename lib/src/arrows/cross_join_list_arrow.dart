@@ -88,7 +88,7 @@ final class CrossJoinListArrow<A, B> {
     });
   }
 
-  static CrossJoinListArrow<A, (int, B)> altAllLeftBiasedTagged<A, B>(IList<CrossJoinListArrow<A, B>> list) {
+  static CrossJoinListArrow<A, (int, B)> altAllTaggedLeftBiased<A, B>(IList<CrossJoinListArrow<A, B>> list) {
     return list.indexed.fold<CrossJoinListArrow<A, (int, B)>>(CrossJoinListArrow.fromRun<A, (int, B)>((_) => CrossJoinList.empty<(int, B)>()), (current, element) {
       final (index, option) = element;
       final arrow = option.rmap<(int, B)>((value) => (index, value));
@@ -99,10 +99,10 @@ final class CrossJoinListArrow<A, B> {
   }
 
   static CrossJoinListArrow<A, B> altAllLeftBiased<A, B>(IList<CrossJoinListArrow<A, B>> list) {
-    return altAllLeftBiasedTagged(list).rmap((tuple) => tuple.$2);
+    return altAllTaggedLeftBiased(list).rmap((tuple) => tuple.$2);
   }
 
-  static CrossJoinListArrow<A, (int, B)> altAllConcatTagged<A, B>(IList<CrossJoinListArrow<A, B>> list) {
+  static CrossJoinListArrow<A, (int, B)> altAllTaggedConcat<A, B>(IList<CrossJoinListArrow<A, B>> list) {
     return list.indexed.fold(CrossJoinListArrow.fromRun<A, (int, B)>((_) => CrossJoinList.empty<(int, B)>()), (current, element) {
       final (index, option) = element;
       final arrow = option.rmap<(int, B)>((value) => (index, value));
@@ -113,7 +113,7 @@ final class CrossJoinListArrow<A, B> {
   }
 
   static CrossJoinListArrow<A, B> altAllConcat<A, B>(IList<CrossJoinListArrow<A, B>> list) {
-    return altAllConcatTagged(list).rmap((tuple) => tuple.$2);
+    return altAllTaggedConcat(list).rmap((tuple) => tuple.$2);
   }
 
   CrossJoinListArrow<(P, A), (P, B)> strong<P>() {

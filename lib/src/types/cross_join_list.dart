@@ -106,5 +106,5 @@ final class CrossJoinList<T> {
 }
 
 extension CrossJoinListMonadExtension<T> on CrossJoinList<CrossJoinList<T>> {
-  CrossJoinList<T> joined() => bind(idfunc);
+  CrossJoinList<T> joined() => bind<T>(idfunc<CrossJoinList<T>>);
 }

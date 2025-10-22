@@ -56,7 +56,7 @@ final class Path<K, T> {
     });
   }
 
-  static Path<K, (int, T)> altAllMergeTagged<K, T>(IList<Path<K, T>> list) {
+  static Path<K, (int, T)> altAllTaggedMerge<K, T>(IList<Path<K, T>> list) {
     return list.indexed.fold<Path<K, (int, T)>>(Path.empty<K, (int, T)>(), (current, element) {
       final (index, option) = element;
       final indexedPath = option.rmap<(int, T)>((value) => (index, value));
@@ -67,10 +67,10 @@ final class Path<K, T> {
   }
 
   static Path<K, T> altAllMerge<K, T>(IList<Path<K, T>> list) {
-    return altAllMergeTagged(list).rmap((tuple) => tuple.$2);
+    return altAllTaggedMerge(list).rmap((tuple) => tuple.$2);
   }
 
-  static Path<K, (int, T)> altAllLeftBiasedTagged<K, T>(IList<Path<K, T>> list) {
+  static Path<K, (int, T)> altAllTaggedLeftBiased<K, T>(IList<Path<K, T>> list) {
     return list.indexed.fold<Path<K, (int, T)>>(Path.empty<K, (int, T)>(), (current, element) {
       final (index, option) = element;
       final indexedPath = option.rmap<(int, T)>((value) => (index, value));
@@ -81,7 +81,7 @@ final class Path<K, T> {
   }
 
   static Path<K, T> altAllLeftBiased<K, T>(IList<Path<K, T>> list) {
-    return altAllLeftBiasedTagged(list).rmap((tuple) => tuple.$2);
+    return altAllTaggedLeftBiased(list).rmap((tuple) => tuple.$2);
   }
 
   Path<K, T2> bind<T2>(Func<T, Path<K, T2>> f) {
