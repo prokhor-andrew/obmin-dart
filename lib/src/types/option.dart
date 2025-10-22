@@ -100,26 +100,6 @@ final class Option<T> {
   static Option<T> altAll<T>(IList<Option<T>> list) {
     return altAllTagged(list).rmap((tuple) => tuple.$2);
   }
-
-  Validator<(), T> asValidator() {
-    return match<Validator<(), T>>(() {
-      return Validator.errors<(), T>(const IList<()>.empty());
-    }, Validator.of<(), T>);
-  }
-
-  IList<T> asList() {
-    return match<IList<T>>(() => IList<T>.empty(), (value) => [value].lock);
-  }
-
-  These<(), T> asThese() {
-    return match<These<(), T>>(() => These.left<(), T>(()), These.right<(), T>);
-  }
-}
-
-extension EitherToOptionalExtension<T> on Either<(), T> {
-  Option<T> asOption() {
-    return match<Option<T>>(constfunc<(), Option<T>>(Option.none<T>()), Option.some<T>);
-  }
 }
 
 extension OptionMonadExtension<T> on Option<Option<T>> {

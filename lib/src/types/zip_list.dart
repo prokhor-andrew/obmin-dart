@@ -12,7 +12,7 @@ final class ZipList<T> {
 
   const ZipList._(this._listOrNone);
 
-  ZipList<T2> rmap<T2>(Func<T, T2> f) => ZipList._(_listOrNone.lmap(f).rmap((list) => list.rmap(f)));
+  ZipList<T2> rmap<T2>(Func<T, T2> f) => ZipList._(_listOrNone.lmap(f).rmap((list) => list.map(f).toIList()));
 
   static ZipList<()> unit() => ZipList._(Either.left(()));
 
@@ -28,17 +28,17 @@ final class ZipList<T> {
             return ZipList._(Either.left((repeatingValue, repeatingValue2)));
           },
           (list2) {
-            return ZipList._(Either.right(list2.rmap((value2) => (repeatingValue, value2))));
+            return ZipList._(Either.right(list2.map((value2) => (repeatingValue, value2)).toIList()));
           },
         );
       },
       (list) {
         return other._listOrNone.match(
           (repeatingValue2) {
-            return ZipList._(Either.right(list.rmap((value) => (value, repeatingValue2))));
+            return ZipList._(Either.right(list.map((value) => (value, repeatingValue2)).toIList()));
           },
           (list2) {
-            IList<(T, T2)> result = IList<(T, T2)>.empty();
+            IList<(T, T2)> result = const IList.empty();
             final int len = min(list.length, list2.length);
             for (int i = 0; i < len; i++) {
               final value1 = list[i];
@@ -56,8 +56,8 @@ final class ZipList<T> {
 
   static ZipList<IList<T>> zipAll<T>(IList<ZipList<T>> list) {
     return list.fold<ZipList<IList<T>>>(ZipList.repeating<IList<T>>(IList<T>.empty()), (current, element) {
-      final path = element.rmap<IList<T>>((value) => [value].lock);
-      return current.zip<IList<T>>(path).rmap<IList<T>>((tuple) => tuple.$1.addAll(tuple.$2));
+      final list = element.rmap<IList<T>>((value) => [value].lock);
+      return current.zip<IList<T>>(list).rmap<IList<T>>((tuple) => tuple.$1.addAll(tuple.$2));
     });
   }
 

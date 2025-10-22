@@ -50,14 +50,6 @@ final class PolyOptic<Whole, TWhole, Part, TPart> {
     });
   }
 
-  static PolyOptic<IList<Part>, IList<TPart>, Part, TPart> list<Part, TPart>() {
-    return PolyOptic.fromRun<IList<Part>, IList<TPart>, Part, TPart>((update) {
-      return (functor) {
-        return functor.rmap<TPart>(update);
-      };
-    });
-  }
-
   static PolyOptic<Option<Part>, Option<TPart>, Part, TPart> option<Part, TPart>() {
     return PolyOptic.fromRun<Option<Part>, Option<TPart>, Part, TPart>((update) {
       return (functor) {
@@ -187,14 +179,6 @@ final class PolyOptic<Whole, TWhole, Part, TPart> {
 
   static PolyOptic<Logger<Part>, Logger<TPart>, Part, TPart> logger<Part, TPart>() {
     return PolyOptic.fromRun<Logger<Part>, Logger<TPart>, Part, TPart>((update) {
-      return (functor) {
-        return functor.rmap<TPart>(update);
-      };
-    });
-  }
-
-  static PolyOptic<IMap<Key, Part>, IMap<Key, TPart>, Part, TPart> dict<Key, Part, TPart>() {
-    return PolyOptic.fromRun<IMap<Key, Part>, IMap<Key, TPart>, Part, TPart>((update) {
       return (functor) {
         return functor.rmap<TPart>(update);
       };

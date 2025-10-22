@@ -40,10 +40,6 @@ final class Optic<Whole, Part> {
     return Optic.fromPolyOptic<Whole, Part>(PolyOptic.prism<Whole, Whole, Part, Part>((whole) => focus(whole).asEither().lmap<Whole>(constfunc<(), Whole>(whole)), reconstruct));
   }
 
-  static Optic<IList<Part>, Part> list<Part>() {
-    return Optic.fromPolyOptic<IList<Part>, Part>(PolyOptic.list<Part, Part>());
-  }
-
   static Optic<Option<Part>, Part> option<Part>() {
     return Optic.fromPolyOptic<Option<Part>, Part>(PolyOptic.option<Part, Part>());
   }
@@ -106,10 +102,6 @@ final class Optic<Whole, Part> {
 
   static Optic<Logger<Part>, Part> logger<Part>() {
     return Optic.fromPolyOptic<Logger<Part>, Part>(PolyOptic.logger<Part, Part>());
-  }
-
-  static Optic<IMap<Key, Part>, Part> dict<Key, Part>() {
-    return Optic.fromPolyOptic<IMap<Key, Part>, Part>(PolyOptic.dict<Key, Part, Part>());
   }
 
   Optic<Whole, Sub> then<Sub>(Optic<Part, Sub> other) {

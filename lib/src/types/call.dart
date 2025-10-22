@@ -81,58 +81,18 @@ final class Call<A, B> {
       return current.zip<IList<B>>(call).rmap<IList<B>>((tuple) => tuple.$1.addAll(tuple.$2));
     });
   }
-
-  These<A, B> asThese() {
-    return match(These.left<A, B>, These.right<A, B>);
-  }
-
-  Either<A, B> asEither() {
-    return _either;
-  }
 }
 
 extension CallValueWhenBothExtension<T> on Call<T, T> {
   T value() => match<T>(idfunc<T>, idfunc<T>);
-
-  IList<T> asIList() {
-    return [value()].lock;
-  }
-
-  Logger<T> asLogger() {
-    return Logger.of<T>(value());
-  }
-
-  Writer<E, T> asWriter<E>() {
-    return Writer.of<E, T>(value());
-  }
 }
 
 extension CallNeverLaunchedExtension<T> on Call<Never, T> {
   T value() => match<T>(absurd<T>, idfunc<T>);
-
-  IList<T> asIList() {
-    return [value()].lock;
-  }
 }
 
 extension CallNeverReturnedExtension<T> on Call<T, Never> {
   T value() => match<T>(idfunc<T>, absurd<T>);
-}
-
-extension CallUnitLaunchedExtension<T> on Call<(), T> {
-  Option<T> asOption() {
-    return match<Option<T>>(constfunc<(), Option<T>>(Option.none<T>()), Option.some<T>);
-  }
-
-  IList<T> asList() {
-    return match<IList<T>>(constfunc<(), IList<T>>(IList<T>.empty()), (value) => [value].lock);
-  }
-}
-
-extension CallListLaunchedExtension<E, T> on Call<IList<E>, T> {
-  Validator<E, T> asValidator() {
-    return match<Validator<E, T>>(Validator.errors<E, T>, Validator.of<E, T>);
-  }
 }
 
 extension CallMonadExtension<E, T> on Call<E, Call<E, T>> {

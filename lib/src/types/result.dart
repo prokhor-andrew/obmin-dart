@@ -81,58 +81,18 @@ final class Result<A, B> {
       return current.zip<IList<B>>(result).rmap<IList<B>>((tuple) => tuple.$1.addAll(tuple.$2));
     });
   }
-
-  These<A, B> asThese() {
-    return match<These<A, B>>(These.left<A, B>, These.right<A, B>);
-  }
-
-  Either<A, B> asEither() {
-    return _either;
-  }
 }
 
 extension ResultValueWhenBothExtension<T> on Result<T, T> {
   T value() => match<T>(idfunc<T>, idfunc<T>);
-
-  IList<T> asIList() {
-    return [value()].lock;
-  }
-
-  Logger<T> asLogger() {
-    return Logger.of<T>(value());
-  }
-
-  Writer<E, T> asWriter<E>() {
-    return Writer.of<E, T>(value());
-  }
 }
 
 extension ResultNeverFailureExtension<T> on Result<Never, T> {
   T value() => match<T>(absurd<T>, idfunc<T>);
-
-  IList<T> asIList() {
-    return [value()].lock;
-  }
 }
 
 extension ResultNeverSuccessExtension<T> on Result<T, Never> {
   T value() => match<T>(idfunc<T>, absurd<T>);
-}
-
-extension ResultUnitFailureExtension<T> on Result<(), T> {
-  Option<T> asOption() {
-    return match<Option<T>>(constfunc<(), Option<T>>(Option.none<T>()), Option.some<T>);
-  }
-
-  IList<T> asList() {
-    return match<IList<T>>(constfunc<(), IList<T>>(IList<T>.empty()), (value) => [value].lock);
-  }
-}
-
-extension ResultListFailureExtension<E, T> on Result<IList<E>, T> {
-  Validator<E, T> asValidator() {
-    return match<Validator<E, T>>(Validator.errors<E, T>, Validator.of<E, T>);
-  }
 }
 
 extension ResultMonadExtension<E, T> on Result<E, Result<E, T>> {

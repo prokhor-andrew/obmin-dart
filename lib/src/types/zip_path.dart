@@ -10,7 +10,7 @@ final class ZipPath<K, T> {
 
   const ZipPath._(this._mapOrNone);
 
-  ZipPath<K, T2> rmap<T2>(Func<T, T2> f) => ZipPath._(_mapOrNone.lmap(f).rmap((map) => map.rmap(f)));
+  ZipPath<K, T2> rmap<T2>(Func<T, T2> f) => ZipPath._(_mapOrNone.lmap(f).rmap((map) => map.map((k, v) => MapEntry(k, f(v)))));
 
   static ZipPath<K, ()> unit<K>() => ZipPath._(Either.left(()));
 
@@ -26,14 +26,14 @@ final class ZipPath<K, T> {
             return ZipPath._(Either.left((repeatingValue, repeatingValue2)));
           },
           (map2) {
-            return ZipPath._(Either.right(map2.rmap((value2) => (repeatingValue, value2))));
+            return ZipPath._(Either.right(map2.map((k, value2) => MapEntry(k, (repeatingValue, value2)))));
           },
         );
       },
       (map) {
         return other._mapOrNone.match(
           (repeatingValue2) {
-            return ZipPath._(Either.right(map.rmap((value) => (value, repeatingValue2))));
+            return ZipPath._(Either.right(map.map((k, value) => MapEntry(k, (value, repeatingValue2)))));
           },
           (map2) {
             IMap<IList<K>, (T, T2)> result = IMap<IList<K>, (T, T2)>.empty();
@@ -61,14 +61,14 @@ final class ZipPath<K, T> {
             return ZipPath._(Either.left((repeatingValue, repeatingValue2)));
           },
           (map2) {
-            return ZipPath._(Either.right(map2.rmap((value2) => (repeatingValue, value2))));
+            return ZipPath._(Either.right(map2.map((k, value2) => MapEntry(k, (repeatingValue, value2)))));
           },
         );
       },
       (map) {
         return other._mapOrNone.match(
           (repeatingValue2) {
-            return ZipPath._(Either.right(map.rmap((value) => (value, repeatingValue2))));
+            return ZipPath._(Either.right(map.map((k, v) => MapEntry(k, (v, repeatingValue2)))));
           },
           (map2) {
             IMap<IList<K>, (T, T2)> result = IMap<IList<K>, (T, T2)>.empty();

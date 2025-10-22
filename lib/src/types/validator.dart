@@ -138,6 +138,4 @@ final class Validator<E, A> {
   static Validator<E, A> altAllLeftBiased<E, A>(IList<Validator<E, A>> list) {
     return altAllConcatTagged(list).rmap((tuple) => tuple.$2);
   }
-
-  Either<IList<E>, A> asEither() => _either;
 }

@@ -192,18 +192,6 @@ final class OptionArrow<A, B> {
     return altAllTagged(list).rmap((tuple) => tuple.$2);
   }
 
-  ListArrow<A, B> asListArrow() {
-    return ListArrow.fromRun<A, B>((a) {
-      return run(a).match<IList<B>>(IList<B>.empty, (value) => [value].lock);
-    });
-  }
-
-  EitherArrow<(), A, B> asEitherArrow() {
-    return EitherArrow.fromRun<(), A, B>((a) {
-      return run(a).match<Either<(), B>>(() => Either.left<(), B>(()), Either.right<(), B>);
-    });
-  }
-
   OptionArrow<(P, A), (P, B)> strong<P>() {
     return OptionArrow.fromRun<(P, A), (P, B)>((tuple) {
       final (p, a) = tuple;

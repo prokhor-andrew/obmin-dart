@@ -26,25 +26,25 @@ final class Path<K, T> {
 
   static Path<K, T> empty<K, T>() => Path.zero<K>().rmap(absurd<T>);
 
-  Path<K, T2> rmap<T2>(Func<T, T2> f) => Path.fromMap(_map.rmap(f));
+  Path<K, T2> rmap<T2>(Func<T, T2> f) => Path.fromMap(_map.map((k, v) => MapEntry(k, f(v))));
 
   Path<K, (T, T2)> zip<T2>(Path<K, T2> other) => bind((val) => other.rmap((val2) => (val, val2)));
 
   Path<K, Either<T, T2>> altMerge<T2>(Path<K, T2> other) {
-    final map1 = _map.rmap(Either.left<T, T2>);
-    final map2 = other._map.rmap(Either.right<T, T2>);
+    final map1 = _map.map((k, v) => MapEntry(k, Either.left<T, T2>(v)));
+    final map2 = other._map.map((k, v) => MapEntry(k, Either.right<T, T2>(v)));
 
     return Path.fromMap(map2.addAll(map1));
   }
 
   Path<K, Either<T, T2>> altLeftBiased<T2>(Path<K, T2> other) {
-    final map1 = _map.rmap(Either.left<T, T2>);
+    final map1 = _map.map((k, v) => MapEntry(k, Either.left<T, T2>(v)));
 
     if (map1.isNotEmpty) {
       return Path.fromMap(map1);
     }
 
-    final map2 = other._map.rmap(Either.right<T, T2>);
+    final map2 = other._map.map((k, v) => MapEntry(k, Either.right<T, T2>(v)));
 
     return Path.fromMap(map2);
   }

@@ -97,10 +97,6 @@ final class Either<A, B> {
     });
   }
 
-  These<A, B> asThese() {
-    return match<These<A, B>>(These.left<A, B>, These.right<A, B>);
-  }
-
   Result<A, B> asResult() {
     return match<Result<A, B>>(Result.failure<A, B>, Result.success<A, B>);
   }
@@ -112,46 +108,14 @@ final class Either<A, B> {
 
 extension EitherValueWhenBothExtension<T> on Either<T, T> {
   T value() => match<T>(idfunc<T>, idfunc<T>);
-
-  IList<T> asIList() {
-    return [value()].lock;
-  }
-
-  Logger<T> asLogger() {
-    return Logger.of<T>(value());
-  }
-
-  Writer<E, T> asWriter<E>() {
-    return Writer.of<E, T>(value());
-  }
 }
 
 extension EitherNeverLeftExtension<T> on Either<Never, T> {
   T value() => match<T>(absurd<T>, idfunc<T>);
-
-  IList<T> asIList() {
-    return [value()].lock;
-  }
 }
 
 extension EitherNeverRightExtension<T> on Either<T, Never> {
   T value() => match<T>(idfunc<T>, absurd<T>);
-}
-
-extension EitherUnitLeftExtension<T> on Either<(), T> {
-  Option<T> asOption() {
-    return match<Option<T>>(constfunc<(), Option<T>>(Option.none<T>()), Option.some<T>);
-  }
-
-  IList<T> asList() {
-    return match<IList<T>>(constfunc<(), IList<T>>(IList<T>.empty()), (value) => [value].lock);
-  }
-}
-
-extension EitherListLeftExtension<E, T> on Either<IList<E>, T> {
-  Validator<E, T> asValidator() {
-    return match<Validator<E, T>>(Validator.errors<E, T>, Validator.of<E, T>);
-  }
 }
 
 extension EitherMonadExtension<E, T> on Either<E, Either<E, T>> {

@@ -42,10 +42,6 @@ final class Logger<A> {
     });
   }
 
-  (String, A) asTuple() {
-    return (_log, _value);
-  }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;

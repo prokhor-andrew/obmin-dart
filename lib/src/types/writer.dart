@@ -48,10 +48,6 @@ final class Writer<A, B> {
     });
   }
 
-  (IList<A>, B) asTuple() {
-    return (_list, _value);
-  }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
