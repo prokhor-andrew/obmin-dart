@@ -20,22 +20,4 @@ final class StoreArrow<T, A, B> {
   static StoreArrow<T, A, A> id<T, A>() => StoreArrow.fromRun((store) => store.extract());
 
   StoreArrow<T, A, C> then<C>(StoreArrow<T, B, C> other) => StoreArrow.fromRun((store) => other.run(store.extend(run)));
-
-  StoreArrow<T, (P, A), (P, B)> strong<P>() {
-    return StoreArrow.fromRun((store) {
-      final (p, a) = store.extract();
-      final b = run(store.rmap(constfunc(a)));
-      return (p, b);
-    });
-  }
-
-  StoreArrow<T, Either<P, A>, Either<P, B>> choice<P>() {
-    return StoreArrow.fromRun((store) {
-      final either = store.extract();
-      return either.match(Either.left, (a) {
-        final b = run(store.rmap(constfunc(a)));
-        return Either.right(b);
-      });
-    });
-  }
 }
